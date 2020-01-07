@@ -1,2 +1,11 @@
 # envsubsty
-Just another expriment about envsubst...
+The envsubsty converts the specified environment variables to their value.
+
+### Usage
+```
+envsubsty [file]
+```
+Or
+```
+cat file.txt | envsubsty
+```
