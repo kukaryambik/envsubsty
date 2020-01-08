@@ -56,7 +56,7 @@ func envsubsty(inData []byte) []byte {
 		// Workaround for simply substitution complex variables (like ${VAR1:=default})
 		out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
 		if string(out) != "" {
-			wrkData = strings.ReplaceAll(wrkData, varName, string(out))
+			wrkData = strings.Replace(wrkData, varName, string(out), 1)
 		}
 	}
 	return []byte(wrkData)
