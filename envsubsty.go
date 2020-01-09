@@ -26,10 +26,17 @@ var (
 	helpArg  bool
 )
 
+func init() {
+	// Write into the source file.
+	flag.BoolVar(&writeArg, "w", writeArg, "Write the output to the source file.")
+	// Help
+	flag.BoolVar(&helpArg, "h", helpArg, "Show help message.")
+}
+
 // Usage
 func usage(s int) {
 	fmt.Printf("%s\n", `Usage:
-	envsubsty [-wh] [file ... |directory ...]
+	envsubsty [-wh] [ file ... | directory ... ]
 Or
 	cat file.txt | envsubsty
 Args:`)
@@ -82,9 +89,6 @@ func isDir(path string) bool {
 }
 
 func main() {
-	// Write into the source file.
-	flag.BoolVar(&writeArg, "w", writeArg, "Write output into the source file.")
-	flag.BoolVar(&helpArg, "h", helpArg, "Show this help message.")
 	flag.Parse()
 
 	if helpArg {
