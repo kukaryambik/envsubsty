@@ -1,4 +1,6 @@
 # envsubsty
+[![Go Report Card](https://goreportcard.com/badge/github.com/kukaryambik/envsubsty)](https://goreportcard.com/report/github.com/kukaryambik/envsubsty)
+
 The envsubsty converts the specified environment variables in files to their value.
 
 ### Usage
