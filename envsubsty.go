@@ -24,6 +24,7 @@ var (
 	err      error
 	writeArg bool
 	helpArg  bool
+	varArg   string
 )
 
 func init() {
@@ -31,15 +32,16 @@ func init() {
 	flag.BoolVar(&writeArg, "w", writeArg, "Write the output to the source file.")
 	// Help
 	flag.BoolVar(&helpArg, "h", helpArg, "Show help message.")
+	flag.StringVar(&varArg, "v", varArg, "Comma or space-separated list of variables to convert.")
 }
 
 // Usage
 func usage(s int) {
 	fmt.Printf("%s\n", `Usage:
-	envsubsty [-wh] [ file ... | directory ... ]
+	envsubsty [-wh] [-v 'vars'] [file|directory ...]
 Or
-	cat file.txt | envsubsty
-Args:`)
+	cat file.txt | envsubsty [-v 'vars']
+Flags:`)
 	flag.PrintDefaults()
 	os.Exit(s)
 }
@@ -59,7 +61,11 @@ func envsubsty(inData []byte) []byte {
 		// Creepy regular expression for finding variables.
 		`\$(\{[0-9A-Za-z_-]+([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z_-]+)`,
 	)
-	for _, varName := range varRegex.FindAllString(wrkData, -1) {
+	varInUse := varRegex.FindAllString(wrkData, -1)
+	if varArg != "" {
+		varInUse = varRegex.FindAllString(varArg, -1)
+	}
+	for _, varName := range varInUse {
 		// Workaround for simply substitution complex variables (like ${VAR1:=default})
 		out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
 		if string(out) != "" {
