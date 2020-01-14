@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const version string = "0.1.3"
+const version string = "0.1.4"
 
 var (
 	srcData   []byte
@@ -61,7 +61,7 @@ func Check(e error) {
 }
 
 // Convert variables
-func Convert(inData []byte) []byte {
+func Convert(inData []byte, varList string) []byte {
 	wrkData := string(inData)
 	//varNameRegex := regexp.MustCompile(`[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*`)
 	varRegex := regexp.MustCompile(
@@ -69,8 +69,8 @@ func Convert(inData []byte) []byte {
 		`\$(\{[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*)`,
 	)
 	varInUse := varRegex.FindAllString(wrkData, -1)
-	if flagVars != "" {
-		varInUse = varRegex.FindAllString(flagVars, -1)
+	if varList != "" {
+		varInUse = varRegex.FindAllString(varList, -1)
 	}
 	for _, varName := range varInUse {
 		// Workaround for simply substitution complex variables (like ${VAR1:=default})
@@ -82,28 +82,47 @@ func Convert(inData []byte) []byte {
 	return []byte(wrkData)
 }
 
-// PrintVer - print version
-func PrintVer() {
-	fmt.Printf("Version: %v", version)
-	os.Exit(0)
-}
-
-// ConvertFile - work with files or directory
-func ConvertFile(file string, write bool) {
-	srcData, err = ioutil.ReadFile(file)
-	Check(err)
-	srcData = Convert(srcData)
+// ConvertFile - work with file
+func ConvertFile(path string, varList string, write bool) error {
+	if _, err := os.Stat(path); err != nil {
+		return err
+	}
+	srcData, err = ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	srcData = Convert(srcData, varList)
 	if write {
-		ioutil.WriteFile(file, srcData, 0644)
+		ioutil.WriteFile(path, srcData, 0644)
 	} else {
 		fmt.Println(string(srcData))
 	}
+	return nil
+}
+
+// ConvertDir - work with directory
+func ConvertDir(path string, varList string, write bool) error {
+	if _, err := os.Stat(path); err != nil {
+		return err
+	}
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		if !isDir(path) {
+			ConvertFile(path+f.Name(), varList, write)
+		}
+	}
+	return nil
 }
 
 // Check if it dir
 func isDir(path string) bool {
 	pathCheck, err := os.Stat(path)
-	Check(err)
+	if err != nil {
+		return false
+	}
 	return pathCheck.Mode().IsDir()
 }
 
@@ -111,11 +130,19 @@ func main() {
 	flag.Parse()
 
 	if flagHelp {
+		fmt.Printf(
+			"%s\n\n",
+			`envsubsty
+
+Description:
+	The envsubsty converts the specified environment variables in files to their value.`,
+		)
 		Usage(0)
 	}
 
 	if flagVer {
-		PrintVer()
+		fmt.Printf("Version: %v\n", version)
+		os.Exit(0)
 	}
 
 	switch flag.NArg() {
@@ -125,7 +152,7 @@ func main() {
 		if (stat.Mode() & os.ModeCharDevice) == 0 {
 			srcData, err = ioutil.ReadAll(os.Stdin)
 			Check(err)
-			srcData = Convert(srcData)
+			srcData = Convert(srcData, flagVars)
 			fmt.Println(string(srcData))
 		} else {
 			Usage(0)
@@ -136,15 +163,11 @@ func main() {
 		var path string = flag.Arg(0)
 		// If path is directory, use all files in directory
 		if isDir(path) {
-			files, err := ioutil.ReadDir(path)
+			err := ConvertDir(path, flagVars, flagWrite)
 			Check(err)
-			for _, f := range files {
-				if !isDir(path + f.Name()) {
-					ConvertFile(path+f.Name(), flagWrite)
-				}
-			}
 		} else {
-			ConvertFile(flag.Arg(0), flagWrite)
+			err := ConvertFile(path, flagVars, flagWrite)
+			Check(err)
 		}
 		break
 	default:

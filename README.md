@@ -5,13 +5,14 @@ The envsubsty converts the specified environment variables in files to their val
 
 ### Usage
 ```
-envsubsty [-wh] [-v 'vars'] [file|directory ...]
+envsubsty [-hVw] [-v 'vars'] [file|directory ...]
 ```
 Or
 ```
 cat file.txt | envsubsty [-v 'vars']
 ```
 Flags:
+ - `-V` - Show version.
  - `-h` - Show help message.
  - `-v 'string'` - Comma or space-separated list of variables to convert.
  - `-w` - Write the output to the source file.
