@@ -52,14 +52,6 @@ Flags:`)
 	os.Exit(s)
 }
 
-// Check if error
-func Check(e error) {
-	if e != nil {
-		fmt.Println(e)
-		Usage(1)
-	}
-}
-
 // Convert variables
 func Convert(inData []byte, varList string) []byte {
 	wrkData := string(inData)
@@ -93,7 +85,10 @@ func ConvertFile(path string, varList string, write bool) error {
 	}
 	srcData = Convert(srcData, varList)
 	if write {
-		ioutil.WriteFile(path, srcData, 0644)
+		err := ioutil.WriteFile(path, srcData, 0644)
+		if err != nil {
+			return err
+		}
 	} else {
 		fmt.Println(string(srcData))
 	}
@@ -111,7 +106,10 @@ func ConvertDir(path string, varList string, write bool) error {
 	}
 	for _, f := range files {
 		if !isDir(path) {
-			ConvertFile(path+f.Name(), varList, write)
+			err := ConvertFile(path+f.Name(), varList, write)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -151,25 +149,29 @@ Description:
 		stat, _ := os.Stdin.Stat()
 		if (stat.Mode() & os.ModeCharDevice) == 0 {
 			srcData, err = ioutil.ReadAll(os.Stdin)
-			Check(err)
+			if err != nil {
+				fmt.Println(err)
+			}
 			srcData = Convert(srcData, flagVars)
 			fmt.Println(string(srcData))
 		} else {
 			Usage(0)
 		}
-		break
 	// If an argument is specified, use it as the path.
 	case 1:
 		var path string = flag.Arg(0)
 		// If path is directory, use all files in directory
 		if isDir(path) {
 			err := ConvertDir(path, flagVars, flagWrite)
-			Check(err)
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
 			err := ConvertFile(path, flagVars, flagWrite)
-			Check(err)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
-		break
 	default:
 		Usage(0)
 	}
