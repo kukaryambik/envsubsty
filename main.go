@@ -19,26 +19,32 @@ import (
 	"strings"
 )
 
+const version string = "0.1.3"
+
 var (
-	srcData  []byte
-	err      error
-	writeArg bool
-	helpArg  bool
-	varArg   string
+	srcData   []byte
+	err       error
+	flagWrite bool
+	flagHelp  bool
+	flagVer   bool
+	flagVars  string
 )
 
 func init() {
 	// Write into the source file.
-	flag.BoolVar(&writeArg, "w", writeArg, "Write the output to the source file.")
+	flag.BoolVar(&flagWrite, "w", flagWrite, "Write the output to the source file.")
 	// Help
-	flag.BoolVar(&helpArg, "h", helpArg, "Show help message.")
-	flag.StringVar(&varArg, "v", varArg, "Comma or space-separated list of variables to convert.")
+	flag.BoolVar(&flagHelp, "h", flagHelp, "Show help message.")
+	// Version
+	flag.BoolVar(&flagVer, "V", flagVer, "Show version.")
+	// List of variables
+	flag.StringVar(&flagVars, "v", flagVars, "Comma or space-separated list of variables to convert.")
 }
 
-// Usage
-func usage(s int) {
+// Usage message
+func Usage(s int) {
 	fmt.Printf("%s\n", `Usage:
-	envsubsty [-wh] [-v 'vars'] [file|directory ...]
+	envsubsty [-hVw] [-v 'vars'] [file|directory ...]
 Or
 	cat file.txt | envsubsty [-v 'vars']
 Flags:`)
@@ -47,15 +53,15 @@ Flags:`)
 }
 
 // Check if error
-func check(e error) {
+func Check(e error) {
 	if e != nil {
 		fmt.Println(e)
-		usage(1)
+		Usage(1)
 	}
 }
 
-// Substitution of variables
-func envsubsty(inData []byte) []byte {
+// Convert variables
+func Convert(inData []byte) []byte {
 	wrkData := string(inData)
 	//varNameRegex := regexp.MustCompile(`[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*`)
 	varRegex := regexp.MustCompile(
@@ -63,8 +69,8 @@ func envsubsty(inData []byte) []byte {
 		`\$(\{[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*)`,
 	)
 	varInUse := varRegex.FindAllString(wrkData, -1)
-	if varArg != "" {
-		varInUse = varRegex.FindAllString(varArg, -1)
+	if flagVars != "" {
+		varInUse = varRegex.FindAllString(flagVars, -1)
 	}
 	for _, varName := range varInUse {
 		// Workaround for simply substitution complex variables (like ${VAR1:=default})
@@ -76,11 +82,17 @@ func envsubsty(inData []byte) []byte {
 	return []byte(wrkData)
 }
 
-// Work with file
-func envsubstFile(file string, write bool) {
+// PrintVer - print version
+func PrintVer() {
+	fmt.Printf("Version: %v", version)
+	os.Exit(0)
+}
+
+// ConvertFile - work with files or directory
+func ConvertFile(file string, write bool) {
 	srcData, err = ioutil.ReadFile(file)
-	check(err)
-	srcData = envsubsty(srcData)
+	Check(err)
+	srcData = Convert(srcData)
 	if write {
 		ioutil.WriteFile(file, srcData, 0644)
 	} else {
@@ -91,15 +103,19 @@ func envsubstFile(file string, write bool) {
 // Check if it dir
 func isDir(path string) bool {
 	pathCheck, err := os.Stat(path)
-	check(err)
+	Check(err)
 	return pathCheck.Mode().IsDir()
 }
 
 func main() {
 	flag.Parse()
 
-	if helpArg {
-		usage(0)
+	if flagHelp {
+		Usage(0)
+	}
+
+	if flagVer {
+		PrintVer()
 	}
 
 	switch flag.NArg() {
@@ -108,11 +124,11 @@ func main() {
 		stat, _ := os.Stdin.Stat()
 		if (stat.Mode() & os.ModeCharDevice) == 0 {
 			srcData, err = ioutil.ReadAll(os.Stdin)
-			check(err)
-			srcData = envsubsty(srcData)
+			Check(err)
+			srcData = Convert(srcData)
 			fmt.Println(string(srcData))
 		} else {
-			usage(1)
+			Usage(0)
 		}
 		break
 	// If an argument is specified, use it as the path.
@@ -121,17 +137,17 @@ func main() {
 		// If path is directory, use all files in directory
 		if isDir(path) {
 			files, err := ioutil.ReadDir(path)
-			check(err)
+			Check(err)
 			for _, f := range files {
 				if !isDir(path + f.Name()) {
-					envsubstFile(path+f.Name(), writeArg)
+					ConvertFile(path+f.Name(), flagWrite)
 				}
 			}
 		} else {
-			envsubstFile(flag.Arg(0), writeArg)
+			ConvertFile(flag.Arg(0), flagWrite)
 		}
 		break
 	default:
-		usage(0)
+		Usage(0)
 	}
 }
