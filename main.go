@@ -57,9 +57,10 @@ func check(e error) {
 // Substitution of variables
 func envsubsty(inData []byte) []byte {
 	wrkData := string(inData)
+	//varNameRegex := regexp.MustCompile(`[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*`)
 	varRegex := regexp.MustCompile(
 		// Creepy regular expression for finding variables.
-		`\$(\{[0-9A-Za-z_-]+([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z_-]+)`,
+		`\$(\{[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*)`,
 	)
 	varInUse := varRegex.FindAllString(wrkData, -1)
 	if varArg != "" {
@@ -131,6 +132,6 @@ func main() {
 		}
 		break
 	default:
-		usage(1)
+		usage(0)
 	}
 }
