@@ -109,7 +109,7 @@ func ConvertDir(path string, varList string, write bool) error {
 	}
 	for _, f := range files {
 		if !isDir(path + f.Name()) {
-			if ConvertFile(path+f.Name(), varList, write) != nil {
+			if err := ConvertFile(path+f.Name(), varList, write); err != nil {
 				return err
 			}
 		}
@@ -164,12 +164,12 @@ func main() {
 		var path string = flag.Arg(0)
 		// If path is directory, use all files in directory
 		if isDir(path) {
-			if ConvertDir(path, flagVars, flagWrite) != nil {
+			if err := ConvertDir(path, flagVars, flagWrite); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 		} else {
-			if ConvertFile(path, flagVars, flagWrite) != nil {
+			if err := ConvertFile(path, flagVars, flagWrite); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
