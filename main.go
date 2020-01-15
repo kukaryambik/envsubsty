@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const version string = "0.1.4"
+const version string = "0.1.5"
 
 var (
 	srcData   []byte
@@ -43,11 +43,14 @@ func init() {
 
 // Usage message
 func Usage(s int) {
-	fmt.Printf("%s\n", `Usage:
-	envsubsty [-hVw] [-v 'vars'] [file|directory ...]
-Or
-	cat file.txt | envsubsty [-v 'vars']
-Flags:`)
+	fmt.Printf(
+		"%s\n\t%s\n%s\n\t%s\n%s\n",
+		"Usage:",
+		"envsubsty [-hVw] [-v 'vars'] [file|directory ...]",
+		"Or",
+		"cat file.txt | envsubsty [-v 'vars']",
+		"Flags:",
+	)
 	flag.PrintDefaults()
 	os.Exit(s)
 }
@@ -105,9 +108,8 @@ func ConvertDir(path string, varList string, write bool) error {
 		return err
 	}
 	for _, f := range files {
-		if !isDir(path) {
-			err := ConvertFile(path+f.Name(), varList, write)
-			if err != nil {
+		if !isDir(path + f.Name()) {
+			if ConvertFile(path+f.Name(), varList, write) != nil {
 				return err
 			}
 		}
@@ -129,11 +131,10 @@ func main() {
 
 	if flagHelp {
 		fmt.Printf(
-			"%s\n\n",
-			`envsubsty
-
-Description:
-	The envsubsty converts the specified environment variables in files to their value.`,
+			"%s\n\n%s\n\t%s\n\n",
+			"envsubsty",
+			"Description:",
+			"The envsubsty converts the specified environment variables in files to their value.",
 		)
 		Usage(0)
 	}
@@ -151,6 +152,7 @@ Description:
 			srcData, err = ioutil.ReadAll(os.Stdin)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
 			}
 			srcData = Convert(srcData, flagVars)
 			fmt.Println(string(srcData))
@@ -162,14 +164,14 @@ Description:
 		var path string = flag.Arg(0)
 		// If path is directory, use all files in directory
 		if isDir(path) {
-			err := ConvertDir(path, flagVars, flagWrite)
-			if err != nil {
+			if ConvertDir(path, flagVars, flagWrite) != nil {
 				fmt.Println(err)
+				os.Exit(1)
 			}
 		} else {
-			err := ConvertFile(path, flagVars, flagWrite)
-			if err != nil {
+			if ConvertFile(path, flagVars, flagWrite) != nil {
 				fmt.Println(err)
+				os.Exit(1)
 			}
 		}
 	default:
