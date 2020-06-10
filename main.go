@@ -28,6 +28,7 @@ var (
 	flagHelp  bool
 	flagVer   bool
 	flagVars  string
+	flagEmpty bool
 )
 
 func init() {
@@ -39,6 +40,8 @@ func init() {
 	flag.BoolVar(&flagVer, "V", flagVer, "Show version.")
 	// List of variables
 	flag.StringVar(&flagVars, "v", flagVars, "Comma or space-separated list of variables to convert.")
+	// Convert empty vars
+	flag.BoolVar(&flagEmpty, "e", flagEmpty, "Convert empty variables.")
 }
 
 // Usage message
@@ -70,7 +73,9 @@ func Convert(inData []byte, varList string) []byte {
 	for _, varName := range varInUse {
 		// Workaround for simply substitution complex variables (like ${VAR1:=default})
 		out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
-		if string(out) != "" {
+		if flagEmpty {
+			wrkData = strings.Replace(wrkData, varName, string(out), 1)
+		} else if string(out) != "" {
 			wrkData = strings.Replace(wrkData, varName, string(out), 1)
 		}
 	}
