@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const version string = "0.1.5"
+const version string = "0.1.6"
 
 var (
 	srcData   []byte
