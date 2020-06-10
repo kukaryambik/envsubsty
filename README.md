@@ -5,7 +5,7 @@ The envsubsty converts the specified environment variables in files to their val
 
 ### Usage
 ```
-envsubsty [-hVw] [-v 'vars'] [file|directory ...]
+envsubsty [-hVwe] [-v 'vars'] [file|directory ...]
 ```
 Or
 ```
@@ -16,3 +16,4 @@ Flags:
  - `-h` - Show help message.
  - `-v 'string'` - Comma or space-separated list of variables to convert.
  - `-w` - Write the output to the source file.
+ - `-e` - Convert empty variables.
