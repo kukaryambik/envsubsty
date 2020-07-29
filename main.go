@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const version string = "0.1.6"
+const version string = "0.1.7"
 
 var (
 	srcData   []byte
@@ -60,26 +60,31 @@ func Usage(s int) {
 
 // Convert variables
 func Convert(inData []byte, varList string) []byte {
+	var outData string
 	wrkData := string(inData)
 	//varNameRegex := regexp.MustCompile(`[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*`)
 	varRegex := regexp.MustCompile(
 		// Creepy regular expression for finding variables.
 		`\$(\{[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*)`,
 	)
-	varInUse := varRegex.FindAllString(wrkData, -1)
-	if varList != "" {
-		varInUse = varRegex.FindAllString(varList, -1)
-	}
-	for _, varName := range varInUse {
-		// Workaround for simply substitution complex variables (like ${VAR1:=default})
-		out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
-		if flagEmpty {
-			wrkData = strings.Replace(wrkData, varName, string(out), 1)
-		} else if string(out) != "" {
-			wrkData = strings.Replace(wrkData, varName, string(out), 1)
+
+	for wrkData != outData {
+		outData = wrkData
+		varInUse := varRegex.FindAllString(wrkData, -1)
+		if varList != "" {
+			varInUse = varRegex.FindAllString(varList, -1)
+		}
+		for _, varName := range varInUse {
+			// Workaround for simply substitution complex variables (like ${VAR1:=default})
+			out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
+			if flagEmpty {
+				wrkData = strings.Replace(wrkData, varName, string(out), 1)
+			} else if string(out) != "" {
+				wrkData = strings.Replace(wrkData, varName, string(out), 1)
+			}
 		}
 	}
-	return []byte(wrkData)
+	return []byte(outData)
 }
 
 // ConvertFile - work with file
