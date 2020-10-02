@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-const version string = "0.1.7"
+const version string = "0.1.8"
 
 var (
 	srcData   []byte
@@ -65,7 +65,7 @@ func Convert(inData []byte, varList string) []byte {
 	//varNameRegex := regexp.MustCompile(`[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*`)
 	varRegex := regexp.MustCompile(
 		// Creepy regular expression for finding variables.
-		`\$(\{[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*([:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z]([0-9A-Za-z_-]*[0-9A-Za-z])*)`,
+		`\$(\{[0-9A-Za-z_]+([#%*,^/:?=+-]{1,2}([^{}]*(\$\{[^{}]+\})*[^{}]*)?)?\}|[0-9A-Za-z_]+)`,
 	)
 
 	for wrkData != outData {
