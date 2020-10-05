@@ -76,7 +76,7 @@ func Convert(inData []byte, varList string) []byte {
 		}
 		for _, varName := range varInUse {
 			// Workaround for simply substitution complex variables (like ${VAR1:=default})
-			out, _ := exec.Command("sh", "-c", `eval printf '%s'`+varName).Output()
+			out, _ := exec.Command("sh", "-c", `eval printf `+varName).Output()
 			if flagEmpty {
 				wrkData = strings.Replace(wrkData, varName, string(out), 1)
 			} else if string(out) != "" {
